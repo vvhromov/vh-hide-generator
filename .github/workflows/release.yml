@@ -3,10 +3,10 @@ name: Create Custom Release
 on:
   push:
     tags:
-      - 'v*'  # Запуск при пуше тегов вида v1.0.0
+      - 'v*'
 
 permissions:
-  contents: write  # Нужно для создания релиза и загрузки файлов
+  contents: write
 
 jobs:
   build-and-release:
@@ -15,16 +15,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create custom archive
+      - name: Build plugin archive
         run: |
-          # Создаём zip-архив с фиксированным именем (без версии)
-          # Внутри архива корневая папка будет называться vh-hide-generator
-          git archive --format=zip --output="vh-hide-generator.zip" HEAD
-          # Проверяем, что файл создан
-          ls -lh vh-hide-generator.zip
+          # Создаём временную папку с нужным именем
+          mkdir -p build/vh-hide-generator
+
+          # Копируем файлы плагина, исключая служебные
+          rsync -a --exclude='.github' \
+                   --exclude='.git' \
+                   --exclude='build' \
+                   --exclude='.gitignore' \
+                   ./ build/vh-hide-generator/
+
+          # Проверяем, что файл на месте
+          ls -la build/vh-hide-generator/
+
+          # Пакуем: внутри архива будет папка vh-hide-generator/
+          cd build
+          zip -r ../vh-hide-generator.zip vh-hide-generator
 
       - name: Create Release and Upload Asset
         uses: softprops/action-gh-release@v2
         with:
           files: vh-hide-generator.zip
-          generate_release_notes: true  # Автоматически генерировать заметки к релизу
+          generate_release_notes: true
