@@ -1,0 +1,30 @@
+name: Create Custom Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Запуск при пуше тегов вида v1.0.0
+
+permissions:
+  contents: write  # Нужно для создания релиза и загрузки файлов
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create custom archive
+        run: |
+          # Создаём zip-архив с фиксированным именем (без версии)
+          # Внутри архива корневая папка будет называться vh-hide-generator
+          git archive --format=zip --output="vh-hide-generator.zip" HEAD
+          # Проверяем, что файл создан
+          ls -lh vh-hide-generator.zip
+
+      - name: Create Release and Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: vh-hide-generator.zip
+          generate_release_notes: true  # Автоматически генерировать заметки к релизу
